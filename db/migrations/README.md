@@ -24,12 +24,28 @@ Order matters:
 
 Apply locally:
 
+```
+docker compose up -d
+psql postgres://wedplan:wedplan_dev_password@localhost:5432/wedplan -f db/migrations/001_extensions.sql
+# ...repeat in numeric order, or point your migration tool at this folder
+```
+
 ## Testing the calendar-locking logic
 
 `apps/api/test/integration/availability-locking.spec.ts` races real concurrent
 transactions against a live Postgres to prove two inquirers can never both
 lock the same vendor+date (spec Section 3.4). It needs its own database with
 these migrations applied:
+
+```
+createdb -O wedplan wedplan_test
+for f in db/migrations/*.sql; do
+  psql postgres://wedplan:wedplan_dev_password@localhost:5432/wedplan_test -f "$f"
+done
+
+cd apps/api
+TEST_DATABASE_URL=postgres://wedplan:wedplan_dev_password@localhost:5432/wedplan_test npm test
+```
 
 `TEST_DATABASE_URL` defaults to that same connection string if unset. Any
 change to the claim logic in `bookings.repository.ts` or the
