@@ -24,6 +24,13 @@ Order matters:
 
 Apply locally:
 
+## Testing the calendar-locking logic
+
+`apps/api/test/integration/availability-locking.spec.ts` races real concurrent
+transactions against a live Postgres to prove two inquirers can never both
+lock the same vendor+date (spec Section 3.4). It needs its own database with
+these migrations applied:
+
 ```
 docker compose up -d
 psql postgres://wedplan:wedplan_dev_password@localhost:5432/wedplan -f db/migrations/001_extensions.sql
