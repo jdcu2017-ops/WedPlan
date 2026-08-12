@@ -31,6 +31,24 @@ transactions against a live Postgres to prove two inquirers can never both
 lock the same vendor+date (spec Section 3.4). It needs its own database with
 these migrations applied:
 
+`TEST_DATABASE_URL` defaults to that same connection string if unset. Any
+change to the claim logic in `bookings.repository.ts` or the
+`availability_slots` schema should keep these tests green before merging.
+git add apps/api/jest.config.js apps/api/test db/migrations/README.md
+git commit -m "Add concurrency tests for the calendar-locking logic
+
+The spec and README both call out db/migrations/005_availability.sql's
+date-locking as the highest-risk piece needing dedicated race-condition
+coverage before Phase 4 sign-off, and the repo had no tests at all. These
+integration tests race real concurrent transactions against a live
+Postgres to prove two inquirers can never both lock the same
+vendor+date, that losing transactions roll back cleanly (no stranded
+'accepted' quotes), and that a vendor can't clobber an active hold.
+
+Verified the tests actually catch the bug they guard against by
+temporarily removing the WHERE-guard in bookings.repository.ts and
+confirming they fail with a double-booking, then restored it."
+git push -u origin claude/continue-previous-work-oxvkwi
 ```
 docker compose up -d
 psql postgres://wedplan:wedplan_dev_password@localhost:5432/wedplan -f db/migrations/001_extensions.sql
